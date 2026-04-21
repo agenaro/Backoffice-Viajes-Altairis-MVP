@@ -1,0 +1,115 @@
+<div class="page-container">
+  <div class="page-header">
+    <h1>Dashboard Operativo</h1>
+    <span class="date-badge">Hoy: {{ today | date:'EEEE, d MMMM yyyy' }}</span>
+  </div>
+
+  @if (loading) {
+    <mat-progress-bar mode="indeterminate" />
+  }
+
+  @if (stats) {
+    <!-- KPI Cards -->
+    <div class="stats-grid">
+      <mat-card class="stat-card kpi-card">
+        <mat-card-content>
+          <mat-icon>hotel</mat-icon>
+          <span class="stat-value">{{ stats.activeHotels }}</span>
+          <span class="stat-label">Hoteles Activos</span>
+          <span class="stat-sub">de {{ stats.totalHotels }} totales</span>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card kpi-card">
+        <mat-card-content>
+          <mat-icon color-blue>book_online</mat-icon>
+          <span class="stat-value">{{ stats.activeBookings }}</span>
+          <span class="stat-label">Reservas Activas</span>
+          <span class="stat-sub">{{ stats.bookingsToday }} nuevas hoy</span>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card kpi-card checkin-card">
+        <mat-card-content>
+          <mat-icon>login</mat-icon>
+          <span class="stat-value">{{ stats.checkInsToday }}</span>
+          <span class="stat-label">Check-ins Hoy</span>
+          <span class="stat-sub">{{ stats.checkOutsToday }} check-outs</span>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card kpi-card revenue-card">
+        <mat-card-content>
+          <mat-icon>euro</mat-icon>
+          <span class="stat-value">{{ stats.revenueThisMonth | currency:'EUR':'symbol':'1.0-0' }}</span>
+          <span class="stat-label">Ingresos Este Mes</span>
+          <span class="stat-sub" [class.positive]="revenueGrowth >= 0" [class.negative]="revenueGrowth < 0">
+            {{ revenueGrowth >= 0 ? '+' : '' }}{{ revenueGrowth }}% vs mes anterior
+          </span>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card kpi-card">
+        <mat-card-content>
+          <mat-icon>percent</mat-icon>
+          <span class="stat-value">{{ stats.averageOccupancyRate }}%</span>
+          <span class="stat-label">Ocupación Media</span>
+          <mat-progress-bar [value]="stats.averageOccupancyRate" [color]="stats.averageOccupancyRate > 70 ? 'warn' : 'primary'" />
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card kpi-card">
+        <mat-card-content>
+          <mat-icon>meeting_room</mat-icon>
+          <span class="stat-value">{{ stats.totalRoomTypes }}</span>
+          <span class="stat-label">Tipos de Habitación</span>
+          <span class="stat-sub">en todos los hoteles</span>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Charts -->
+    <div class="charts-grid">
+      <mat-card class="chart-card">
+        <mat-card-header>
+          <mat-card-title>Tendencia de Reservas (14 días)</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <canvas #trendChart></canvas>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="chart-card">
+        <mat-card-header>
+          <mat-card-title>Reservas por Estado</mat-card-title>
+        </mat-card-header>
+        <mat-card-content class="donut-container">
+          <canvas #statusChart></canvas>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Hotel Occupancy -->
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>Ocupación por Hotel — Hoy</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="occupancy-list">
+          @for (hotel of stats.hotelOccupancy; track hotel.hotelName) {
+            <div class="occupancy-row">
+              <span class="hotel-name">{{ hotel.hotelName }}</span>
+              <div class="occupancy-bar">
+                <div class="fill" [class]="getOccupancyClass(hotel.occupancyRate)"
+                     [style.width.%]="hotel.occupancyRate"></div>
+              </div>
+              <span class="occupancy-pct" [class]="getOccupancyClass(hotel.occupancyRate)">
+                {{ hotel.occupancyRate | number:'1.0-1' }}%
+              </span>
+            </div>
+          }
+        </div>
+      </mat-card-content>
+    </mat-card>
+  }
+</div>

@@ -1,0 +1,141 @@
+<div class="page-container">
+  <div class="page-header">
+    <h1>Nueva Reserva</h1>
+    <button mat-stroked-button (click)="cancel()">
+      <mat-icon>arrow_back</mat-icon> Volver
+    </button>
+  </div>
+
+  <mat-card>
+    <mat-card-content>
+      <form [formGroup]="form" (ngSubmit)="save()">
+
+        <div class="section-title">Hotel y Habitación</div>
+        <div class="form-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>Hotel</mat-label>
+            <mat-select formControlName="hotelId">
+              @for (h of hotels; track h.id) {
+                <mat-option [value]="h.id">{{ h.name }} — {{ h.city }}</mat-option>
+              }
+            </mat-select>
+            @if (form.get('hotelId')?.errors?.['required'] && form.get('hotelId')?.touched) {
+              <mat-error>Selecciona un hotel</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Tipo de Habitación</mat-label>
+            <mat-select formControlName="roomTypeId" [disabled]="!form.value.hotelId">
+              @for (rt of roomTypes; track rt.id) {
+                <mat-option [value]="rt.id">{{ rt.name }} — {{ rt.basePrice | currency:'EUR':'symbol':'1.0-0' }}/noche</mat-option>
+              }
+            </mat-select>
+            @if (form.get('roomTypeId')?.errors?.['required'] && form.get('roomTypeId')?.touched) {
+              <mat-error>Selecciona un tipo de habitación</mat-error>
+            }
+          </mat-form-field>
+        </div>
+
+        <div class="section-title">Fechas y Habitaciones</div>
+        <div class="form-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>Check-in</mat-label>
+            <input matInput [matDatepicker]="checkInPicker" formControlName="checkIn" [min]="today" placeholder="dd/mm/aaaa" />
+            <mat-datepicker-toggle matIconSuffix [for]="checkInPicker" />
+            <mat-datepicker #checkInPicker />
+            @if (form.get('checkIn')?.errors?.['required'] && form.get('checkIn')?.touched) {
+              <mat-error>La fecha de entrada es obligatoria</mat-error>
+            }
+            @if (form.get('checkIn')?.errors?.['matDatepickerMin']) {
+              <mat-error>La fecha de entrada no puede ser anterior a hoy</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Check-out</mat-label>
+            <input matInput [matDatepicker]="checkOutPicker" formControlName="checkOut" [min]="minCheckOut" placeholder="dd/mm/aaaa" />
+            <mat-datepicker-toggle matIconSuffix [for]="checkOutPicker" />
+            <mat-datepicker #checkOutPicker />
+            @if (form.get('checkOut')?.errors?.['required'] && form.get('checkOut')?.touched) {
+              <mat-error>La fecha de salida es obligatoria</mat-error>
+            }
+            @if (form.get('checkOut')?.errors?.['matDatepickerMin']) {
+              <mat-error>Debe ser posterior al check-in</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Número de Habitaciones</mat-label>
+            <input matInput type="number" formControlName="rooms" min="1" max="20" />
+            @if (form.get('rooms')?.errors?.['required'] && form.get('rooms')?.touched) {
+              <mat-error>Indica el número de habitaciones</mat-error>
+            }
+            @if (form.get('rooms')?.errors?.['min']) {
+              <mat-error>Mínimo 1 habitación</mat-error>
+            }
+            @if (form.get('rooms')?.errors?.['max']) {
+              <mat-error>Máximo 20 habitaciones</mat-error>
+            }
+          </mat-form-field>
+
+          @if (totalPrice > 0) {
+            <div class="price-preview">
+              <span class="price-label">Total estimado</span>
+              <span class="price-value">{{ totalPrice | currency:'EUR':'symbol':'1.2-2' }}</span>
+            </div>
+          }
+        </div>
+
+        <div class="section-title">Datos del Huésped</div>
+        <div class="form-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>Nombre del Huésped</mat-label>
+            <mat-icon matPrefix>person</mat-icon>
+            <input matInput formControlName="guestName" placeholder="Nombre y apellidos" />
+            @if (form.get('guestName')?.errors?.['required'] && form.get('guestName')?.touched) {
+              <mat-error>El nombre del huésped es obligatorio</mat-error>
+            }
+            @if (form.get('guestName')?.errors?.['minlength']) {
+              <mat-error>Mínimo 2 caracteres</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Email</mat-label>
+            <mat-icon matPrefix>email</mat-icon>
+            <input matInput type="email" formControlName="guestEmail" placeholder="huesped@email.com" />
+            @if (form.get('guestEmail')?.errors?.['required'] && form.get('guestEmail')?.touched) {
+              <mat-error>El email es obligatorio</mat-error>
+            }
+            @if (form.get('guestEmail')?.errors?.['email'] && form.get('guestEmail')?.touched) {
+              <mat-error>Formato de email no válido</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Teléfono <span class="optional">(opcional)</span></mat-label>
+            <mat-icon matPrefix>phone</mat-icon>
+            <input matInput formControlName="guestPhone" placeholder="+34 600 000 000" />
+            @if (form.get('guestPhone')?.errors?.['pattern'] && form.get('guestPhone')?.touched) {
+              <mat-error>Formato no válido (ej: +34 600 000 000)</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Notas <span class="optional">(opcional)</span></mat-label>
+            <textarea matInput formControlName="notes" rows="2" placeholder="Peticiones especiales, alergias..."></textarea>
+          </mat-form-field>
+        </div>
+
+        <div class="form-actions">
+          <button mat-stroked-button type="button" (click)="cancel()">Cancelar</button>
+          <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid || saving">
+            <mat-icon>save</mat-icon>
+            {{ saving ? 'Guardando...' : 'Crear Reserva' }}
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+</div>

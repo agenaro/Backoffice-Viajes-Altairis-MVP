@@ -1,0 +1,121 @@
+<div class="page-container">
+  <div class="page-header">
+    <h1>Gestión de Hoteles</h1>
+    <button mat-raised-button color="primary" routerLink="/hotels/new">
+      <mat-icon>add</mat-icon> Nuevo Hotel
+    </button>
+  </div>
+
+  <mat-card>
+    <!-- Filters -->
+    <mat-card-content>
+      <div class="search-bar">
+        <mat-form-field appearance="outline">
+          <mat-label>Buscar hotel, ciudad...</mat-label>
+          <mat-icon matPrefix>search</mat-icon>
+          <input matInput [(ngModel)]="search" (keyup.enter)="onSearch()" placeholder="Nombre, ciudad, país..." />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" style="max-width:180px">
+          <mat-label>País</mat-label>
+          <input matInput [(ngModel)]="countryFilter" (change)="onSearch()" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" style="max-width:140px">
+          <mat-label>Estrellas</mat-label>
+          <mat-select [(ngModel)]="starsFilter" (selectionChange)="onSearch()">
+            <mat-option [value]="null">Todas</mat-option>
+            @for (s of [1,2,3,4,5]; track s) {
+              <mat-option [value]="s">{{ s }} ★</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <button mat-stroked-button (click)="search=''; countryFilter=''; starsFilter=null; onSearch()">
+          <mat-icon>clear</mat-icon> Limpiar
+        </button>
+      </div>
+
+      @if (loading) { <mat-progress-bar mode="indeterminate" /> }
+
+      <div class="table-container">
+        <table mat-table [dataSource]="hotels" matSort (matSortChange)="onSort($event)">
+
+          <ng-container matColumnDef="name">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="name">Hotel</th>
+            <td mat-cell *matCellDef="let h">
+              <strong>{{ h.name }}</strong>
+              @if (h.description) {
+                <div class="sub-text">{{ h.description | slice:0:60 }}{{ h.description.length > 60 ? '...' : '' }}</div>
+              }
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="stars">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="stars">Categoría</th>
+            <td mat-cell *matCellDef="let h">
+              <span class="stars">{{ '★'.repeat(h.stars) }}</span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="city">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="city">Ciudad</th>
+            <td mat-cell *matCellDef="let h">{{ h.city }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="country">
+            <th mat-header-cell *matHeaderCellDef>País</th>
+            <td mat-cell *matCellDef="let h">{{ h.country }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="roomTypes">
+            <th mat-header-cell *matHeaderCellDef>Tipos Hab.</th>
+            <td mat-cell *matCellDef="let h">
+              <span class="count-badge">{{ h.roomTypesCount }}</span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>Estado</th>
+            <td mat-cell *matCellDef="let h">
+              <span class="status-chip" [class.active]="h.isActive" [class.inactive]="!h.isActive">
+                {{ h.isActive ? 'Activo' : 'Inactivo' }}
+              </span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Acciones</th>
+            <td mat-cell *matCellDef="let h">
+              <div class="action-buttons">
+                <button mat-icon-button color="primary" (click)="viewRooms(h.id)" matTooltip="Ver tipos de habitación">
+                  <mat-icon>meeting_room</mat-icon>
+                </button>
+                <button mat-icon-button (click)="edit(h.id)" matTooltip="Editar">
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button mat-icon-button color="warn" (click)="delete(h)" matTooltip="Eliminar">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+
+          <tr class="mat-row" *matNoDataRow>
+            <td class="mat-cell no-data" colspan="7">No se encontraron hoteles</td>
+          </tr>
+        </table>
+      </div>
+
+      <mat-paginator
+        [length]="totalCount"
+        [pageSize]="pageSize"
+        [pageSizeOptions]="[10, 20, 50, 100]"
+        (page)="onPageChange($event)"
+        showFirstLastButtons />
+    </mat-card-content>
+  </mat-card>
+</div>

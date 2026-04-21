@@ -1,0 +1,85 @@
+<div class="page-container">
+  <div class="page-header">
+    <h1>{{ isEdit ? 'Editar Hotel' : 'Nuevo Hotel' }}</h1>
+    <button mat-stroked-button (click)="cancel()">
+      <mat-icon>arrow_back</mat-icon> Volver
+    </button>
+  </div>
+
+  <mat-card>
+    <mat-card-content>
+      <form [formGroup]="form" (ngSubmit)="save()">
+        <div class="form-grid">
+          <mat-form-field appearance="outline" class="col-full">
+            <mat-label>Nombre del Hotel</mat-label>
+            <input matInput formControlName="name" placeholder="Ej: Hotel Ibis Barcelona" />
+            @if (form.get('name')?.errors?.['required']) {
+              <mat-error>El nombre es obligatorio</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Categoría (estrellas)</mat-label>
+            <mat-select formControlName="stars">
+              @for (s of [1,2,3,4,5]; track s) {
+                <mat-option [value]="s">{{ '★'.repeat(s) }} ({{ s }} estrella{{ s > 1 ? 's' : '' }})</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>País</mat-label>
+            <input matInput formControlName="country" placeholder="España" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Ciudad</mat-label>
+            <input matInput formControlName="city" placeholder="Barcelona" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="col-full">
+            <mat-label>Dirección</mat-label>
+            <input matInput formControlName="address" placeholder="Calle, número, código postal" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Teléfono</mat-label>
+            <mat-icon matPrefix>phone</mat-icon>
+            <input matInput formControlName="phone" placeholder="+34 93 000 0000" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Email</mat-label>
+            <mat-icon matPrefix>email</mat-icon>
+            <input matInput formControlName="email" type="email" placeholder="info@hotel.com" />
+            @if (form.get('email')?.errors?.['email']) {
+              <mat-error>Email no válido</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="col-full">
+            <mat-label>Descripción</mat-label>
+            <textarea matInput formControlName="description" rows="3"
+                      placeholder="Descripción del hotel..."></textarea>
+          </mat-form-field>
+
+          @if (isEdit) {
+            <div class="toggle-row">
+              <mat-slide-toggle formControlName="isActive" color="primary">
+                Hotel Activo
+              </mat-slide-toggle>
+            </div>
+          }
+        </div>
+
+        <div class="form-actions">
+          <button mat-stroked-button type="button" (click)="cancel()">Cancelar</button>
+          <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid || saving">
+            <mat-icon>save</mat-icon>
+            {{ saving ? 'Guardando...' : (isEdit ? 'Actualizar' : 'Crear Hotel') }}
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+</div>

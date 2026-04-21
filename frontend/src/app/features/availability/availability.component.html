@@ -1,0 +1,129 @@
+<div class="page-container">
+  <div class="page-header">
+    <h1>Disponibilidad e Inventario</h1>
+    <button mat-raised-button color="primary" (click)="openBulkDialog()">
+      <mat-icon>edit_calendar</mat-icon> Carga Masiva
+    </button>
+  </div>
+
+  <mat-card>
+    <mat-card-content>
+      <div class="search-bar">
+        <mat-form-field appearance="outline">
+          <mat-label>Hotel</mat-label>
+          <mat-select [(ngModel)]="selectedHotelId" (selectionChange)="onHotelChange()">
+            <mat-option [value]="null">Todos los hoteles</mat-option>
+            @for (h of hotels; track h.id) {
+              <mat-option [value]="h.id">{{ h.name }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        @if (selectedHotelId) {
+          <mat-form-field appearance="outline">
+            <mat-label>Tipo de Habitación</mat-label>
+            <mat-select [(ngModel)]="selectedRoomTypeId" (selectionChange)="load()">
+              <mat-option [value]="null">Todos los tipos</mat-option>
+              @for (rt of roomTypes; track rt.id) {
+                <mat-option [value]="rt.id">{{ rt.name }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        }
+
+        <mat-form-field appearance="outline">
+          <mat-label>Fecha inicio</mat-label>
+          <input matInput type="date" [(ngModel)]="startDate" (change)="load()" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Fecha fin</mat-label>
+          <input matInput type="date" [(ngModel)]="endDate" (change)="load()" />
+        </mat-form-field>
+      </div>
+
+      @if (loading) { <mat-progress-bar mode="indeterminate" /> }
+
+      @if (availabilities.length > 0) {
+      <div class="summary-row">
+        <span class="summary-item">
+          <mat-icon>list</mat-icon> {{ availabilities.length }} registros
+        </span>
+        <span class="summary-item">
+          <mat-icon>hotel</mat-icon>
+          Ocupación media: <strong>{{ avgOccupancy | number:'1.0-1' }}%</strong>
+        </span>
+      </div>
+      }
+
+      <div class="table-container">
+        <table mat-table [dataSource]="availabilities">
+
+          <ng-container matColumnDef="date">
+            <th mat-header-cell *matHeaderCellDef>Fecha</th>
+            <td mat-cell *matCellDef="let a">
+              <strong>{{ a.date | date:'dd/MM/yyyy' }}</strong>
+              <div class="day-name">{{ a.date | date:'EEEE':'':'es' }}</div>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="hotelName">
+            <th mat-header-cell *matHeaderCellDef>Hotel</th>
+            <td mat-cell *matCellDef="let a">{{ a.hotelName }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="roomType">
+            <th mat-header-cell *matHeaderCellDef>Tipo Habitación</th>
+            <td mat-cell *matCellDef="let a">{{ a.roomTypeName }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="availableRooms">
+            <th mat-header-cell *matHeaderCellDef>Disponibles / Total</th>
+            <td mat-cell *matCellDef="let a">
+              <span [class.low-avail]="a.availableRooms < 3">
+                {{ a.availableRooms }}
+              </span>
+              / {{ a.totalRooms }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="occupancy">
+            <th mat-header-cell *matHeaderCellDef>Ocupación</th>
+            <td mat-cell *matCellDef="let a">
+              <div class="occupancy-cell">
+                <div class="occupancy-bar">
+                  <div class="fill" [class]="getOccupancyClass(a.occupancyRate)"
+                       [style.width.%]="a.occupancyRate"></div>
+                </div>
+                <span [class]="'occ-pct ' + getOccupancyClass(a.occupancyRate)">
+                  {{ a.occupancyRate | number:'1.0-1' }}%
+                </span>
+              </div>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="price">
+            <th mat-header-cell *matHeaderCellDef>Precio</th>
+            <td mat-cell *matCellDef="let a">
+              {{ a.price | currency:'EUR':'symbol':'1.2-2' }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef></th>
+            <td mat-cell *matCellDef="let a">
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"
+              [class.full-row]="row.availableRooms === 0"></tr>
+
+          <tr class="mat-row" *matNoDataRow>
+            <td class="mat-cell no-data" colspan="7">Sin datos para el período seleccionado</td>
+          </tr>
+        </table>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

@@ -1,0 +1,132 @@
+<div class="page-container">
+  <div class="page-header">
+    <h1>Gestión de Reservas</h1>
+    <button mat-raised-button color="primary" routerLink="/bookings/new">
+      <mat-icon>add</mat-icon> Nueva Reserva
+    </button>
+  </div>
+
+  <mat-card>
+    <mat-card-content>
+      <div class="search-bar">
+        <mat-form-field appearance="outline">
+          <mat-label>Buscar huésped...</mat-label>
+          <mat-icon matPrefix>search</mat-icon>
+          <input matInput [(ngModel)]="search" (keyup.enter)="onSearch()" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" style="max-width:200px">
+          <mat-label>Estado</mat-label>
+          <mat-select [(ngModel)]="statusFilter" (selectionChange)="onSearch()">
+            <mat-option value="">Todos</mat-option>
+            @for (s of statuses; track s) {
+              <mat-option [value]="s">{{ statusLabel[s] }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" style="max-width:220px">
+          <mat-label>Hotel</mat-label>
+          <mat-select [(ngModel)]="hotelFilter" (selectionChange)="onSearch()">
+            <mat-option [value]="null">Todos</mat-option>
+            @for (h of hotels; track h.id) {
+              <mat-option [value]="h.id">{{ h.name }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <button mat-stroked-button (click)="search=''; statusFilter=''; hotelFilter=null; onSearch()">
+          <mat-icon>clear</mat-icon>
+        </button>
+      </div>
+
+      @if (loading) { <mat-progress-bar mode="indeterminate" /> }
+
+      <div class="table-container">
+        <table mat-table [dataSource]="bookings">
+
+          <ng-container matColumnDef="guest">
+            <th mat-header-cell *matHeaderCellDef>Huésped</th>
+            <td mat-cell *matCellDef="let b">
+              <strong>{{ b.guestName }}</strong>
+              <div class="sub-text">{{ b.guestEmail }}</div>
+              @if (b.guestPhone) { <div class="sub-text">{{ b.guestPhone }}</div> }
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="hotel">
+            <th mat-header-cell *matHeaderCellDef>Hotel</th>
+            <td mat-cell *matCellDef="let b">
+              <span>{{ b.hotelName }}</span>
+              <div class="sub-text">{{ b.hotelCity }}</div>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="roomType">
+            <th mat-header-cell *matHeaderCellDef>Habitación</th>
+            <td mat-cell *matCellDef="let b">
+              {{ b.roomTypeName }}
+              <div class="sub-text">{{ b.rooms }} hab.</div>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="dates">
+            <th mat-header-cell *matHeaderCellDef>Fechas</th>
+            <td mat-cell *matCellDef="let b">
+              <div>{{ b.checkIn | date:'dd/MM/yy' }} → {{ b.checkOut | date:'dd/MM/yy' }}</div>
+              <div class="sub-text">{{ b.nights }} noche{{ b.nights !== 1 ? 's' : '' }}</div>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="price">
+            <th mat-header-cell *matHeaderCellDef>Importe</th>
+            <td mat-cell *matCellDef="let b">
+              <strong>{{ b.totalPrice | currency:'EUR':'symbol':'1.2-2' }}</strong>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>Estado</th>
+            <td mat-cell *matCellDef="let b">
+              <span class="status-chip {{ b.status }}">{{ statusLabel[b.status] }}</span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Acciones</th>
+            <td mat-cell *matCellDef="let b">
+              @if (nextStatuses(b.status).length > 0) {
+                <button mat-icon-button [matMenuTriggerFor]="menu" matTooltip="Cambiar estado">
+                  <mat-icon>more_vert</mat-icon>
+                </button>
+                <mat-menu #menu="matMenu">
+                  @for (s of nextStatuses(b.status); track s) {
+                    <button mat-menu-item (click)="updateStatus(b, s)">
+                      <mat-icon>arrow_forward</mat-icon>
+                      {{ statusLabel[s] }}
+                    </button>
+                  }
+                </mat-menu>
+              }
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"
+              [class.cancelled-row]="row.status === 'Cancelled'"></tr>
+
+          <tr class="mat-row" *matNoDataRow>
+            <td class="mat-cell no-data" colspan="7">No se encontraron reservas</td>
+          </tr>
+        </table>
+      </div>
+
+      <mat-paginator
+        [length]="totalCount"
+        [pageSize]="pageSize"
+        [pageSizeOptions]="[10, 20, 50]"
+        (page)="onPageChange($event)"
+        showFirstLastButtons />
+    </mat-card-content>
+  </mat-card>
+</div>

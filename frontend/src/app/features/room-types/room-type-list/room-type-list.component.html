@@ -1,0 +1,89 @@
+<div class="page-container">
+  <div class="page-header">
+    <div>
+      <h1>Tipos de Habitación</h1>
+      @if (hotel) {
+        <p class="hotel-subtitle">
+          <mat-icon style="font-size:16px;vertical-align:middle">hotel</mat-icon>
+          {{ hotel.name }} — {{ hotel.city }} ({{ '★'.repeat(hotel.stars) }})
+        </p>
+      }
+    </div>
+    <div class="header-actions">
+      <button mat-stroked-button routerLink="/hotels">
+        <mat-icon>arrow_back</mat-icon> Volver a Hoteles
+      </button>
+      <button mat-raised-button color="primary" (click)="openForm()">
+        <mat-icon>add</mat-icon> Nuevo Tipo
+      </button>
+    </div>
+  </div>
+
+  <mat-card>
+    <mat-card-content>
+      @if (loading) { <mat-progress-bar mode="indeterminate" /> }
+
+      <div class="table-container">
+        <table mat-table [dataSource]="roomTypes">
+
+          <ng-container matColumnDef="name">
+            <th mat-header-cell *matHeaderCellDef>Tipo</th>
+            <td mat-cell *matCellDef="let rt">
+              <strong>{{ rt.name }}</strong>
+              @if (rt.description) {
+                <div class="sub-text">{{ rt.description }}</div>
+              }
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="maxOccupancy">
+            <th mat-header-cell *matHeaderCellDef>Ocupación Máx.</th>
+            <td mat-cell *matCellDef="let rt">
+              <span class="occupancy">
+                <mat-icon style="font-size:16px;width:16px;height:16px">person</mat-icon>
+              </span>
+              {{ rt.maxOccupancy }} persona{{ rt.maxOccupancy > 1 ? 's' : '' }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="basePrice">
+            <th mat-header-cell *matHeaderCellDef>Precio Base</th>
+            <td mat-cell *matCellDef="let rt">
+              <strong>{{ rt.basePrice | currency:'EUR':'symbol':'1.2-2' }}</strong> / noche
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="totalRooms">
+            <th mat-header-cell *matHeaderCellDef>Total Habitaciones</th>
+            <td mat-cell *matCellDef="let rt">
+              <span class="count-badge">{{ rt.totalRooms }}</span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Acciones</th>
+            <td mat-cell *matCellDef="let rt">
+              <div class="action-buttons">
+                <button mat-icon-button (click)="openForm(rt)" matTooltip="Editar">
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button mat-icon-button color="warn" (click)="delete(rt)" matTooltip="Eliminar">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+
+          <tr class="mat-row" *matNoDataRow>
+            <td class="mat-cell no-data" colspan="5">
+              No hay tipos de habitación. <a (click)="openForm()" style="cursor:pointer;color:#3949ab">Añadir uno</a>
+            </td>
+          </tr>
+        </table>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>
