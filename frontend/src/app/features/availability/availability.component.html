@@ -32,13 +32,13 @@
         }
 
         <mat-form-field appearance="outline">
-          <mat-label>Fecha inicio</mat-label>
-          <input matInput type="date" [(ngModel)]="startDate" (change)="load()" />
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Fecha fin</mat-label>
-          <input matInput type="date" [(ngModel)]="endDate" (change)="load()" />
+          <mat-label>Rango de fechas</mat-label>
+          <mat-date-range-input [rangePicker]="picker">
+            <input matStartDate [(ngModel)]="startDate" name="startDate" placeholder="Fecha inicio" (dateChange)="load()" />
+            <input matEndDate [(ngModel)]="endDate" name="endDate" placeholder="Fecha fin" (dateChange)="load()" />
+          </mat-date-range-input>
+          <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+          <mat-date-range-picker #picker></mat-date-range-picker>
         </mat-form-field>
       </div>
 

@@ -39,6 +39,7 @@ export class BookingFormComponent implements OnInit {
 
   hotels: Hotel[] = [];
   roomTypes: RoomType[] = [];
+  selectedRoomType: RoomType | null = null;
   saving = false;
   readonly today = new Date();
 
@@ -60,7 +61,16 @@ export class BookingFormComponent implements OnInit {
     this.form.get('hotelId')!.valueChanges.subscribe(id => {
       if (id) this.rtSvc.getByHotel(id).subscribe(rts => this.roomTypes = rts);
       else this.roomTypes = [];
+      this.selectedRoomType = null;
       this.form.patchValue({ roomTypeId: null });
+    });
+
+    this.form.get('roomTypeId')!.valueChanges.subscribe((id: number | null) => {
+      this.selectedRoomType = this.roomTypes.find(rt => rt.id === id) ?? null;
+      const ctrl = this.form.get('rooms')!;
+      const max = this.selectedRoomType?.totalRooms ?? 20;
+      ctrl.setValidators([Validators.required, Validators.min(1), Validators.max(max)]);
+      ctrl.updateValueAndValidity();
     });
 
     this.form.get('checkIn')!.valueChanges.subscribe(() => {

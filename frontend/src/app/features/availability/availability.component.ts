@@ -12,6 +12,8 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { provideNativeDateAdapter } from '@angular/material/core';
 import { AvailabilityService } from '../../core/services/availability.service';
 import { HotelService } from '../../core/services/hotel.service';
 import { RoomTypeService } from '../../core/services/room-type.service';
@@ -23,12 +25,13 @@ import { BulkAvailabilityDialogComponent } from './bulk-dialog.component';
 @Component({
   selector: 'app-availability',
   standalone: true,
+  providers: [provideNativeDateAdapter()],
   imports: [
     CommonModule, FormsModule,
     MatCardModule, MatFormFieldModule, MatInputModule,
     MatSelectModule, MatButtonModule, MatIconModule,
     MatTableModule, MatProgressBarModule, MatDialogModule,
-    MatSnackBarModule, MatTooltipModule
+    MatSnackBarModule, MatTooltipModule, MatDatepickerModule
   ],
   templateUrl: './availability.component.html',
   styleUrl: './availability.component.scss'
@@ -47,15 +50,15 @@ export class AvailabilityComponent implements OnInit {
 
   selectedHotelId: number | null = null;
   selectedRoomTypeId: number | null = null;
-  startDate = '';
-  endDate = '';
+  startDate: Date | null = null;
+  endDate: Date | null = null;
 
   displayedColumns = ['date', 'hotelName', 'roomType', 'availableRooms', 'occupancy', 'price', 'actions'];
 
   ngOnInit(): void {
     const today = new Date();
-    this.startDate = today.toISOString().slice(0, 10);
-    this.endDate = new Date(today.getTime() + 14 * 86400000).toISOString().slice(0, 10);
+    this.startDate = today;
+    this.endDate = new Date(today.getTime() + 14 * 86400000);
 
     this.hotelSvc.getAll({ pageSize: 100, isActive: true }).subscribe(r => this.hotels = r.items);
     this.load();
@@ -70,13 +73,18 @@ export class AvailabilityComponent implements OnInit {
     this.load();
   }
 
+  private formatDate(d: Date | null): string | undefined {
+    if (!d) return undefined;
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+
   load(): void {
     this.loading = true;
     this.svc.get({
       hotelId: this.selectedHotelId ?? undefined,
       roomTypeId: this.selectedRoomTypeId ?? undefined,
-      startDate: this.startDate || undefined,
-      endDate: this.endDate || undefined
+      startDate: this.formatDate(this.startDate),
+      endDate: this.formatDate(this.endDate)
     }).subscribe(data => {
       this.availabilities = data;
       this.loading = false;

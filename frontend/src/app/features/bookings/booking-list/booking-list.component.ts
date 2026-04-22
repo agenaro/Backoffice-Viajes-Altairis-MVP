@@ -89,7 +89,7 @@ export class BookingListComponent implements OnInit {
 
   statusLabel: Record<string, string> = {
     Pending: 'Pendiente', Confirmed: 'Confirmada',
-    CheckedIn: 'Check-in', CheckedOut: 'Check-out', Cancelled: 'Cancelada'
+    CheckedIn: 'Check-in', CheckedOut: 'Check-out', Cancelled: 'Cancelar'
   };
 
   nextStatuses(current: string): BookingStatus[] {
