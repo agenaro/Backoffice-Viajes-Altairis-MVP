@@ -14,6 +14,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { BookingService } from '../../../core/services/booking.service';
 import { HotelService } from '../../../core/services/hotel.service';
 import { RoomTypeService } from '../../../core/services/room-type.service';
+import { AvailabilityService } from '../../../core/services/availability.service';
 import { Hotel } from '../../../core/models/hotel.model';
 import { RoomType } from '../../../core/models/room-type.model';
 
@@ -34,26 +35,36 @@ export class BookingFormComponent implements OnInit {
   private svc = inject(BookingService);
   private hotelSvc = inject(HotelService);
   private rtSvc = inject(RoomTypeService);
+  private avSvc = inject(AvailabilityService);
   private router = inject(Router);
   private snack = inject(MatSnackBar);
 
   hotels: Hotel[] = [];
   roomTypes: RoomType[] = [];
   selectedRoomType: RoomType | null = null;
+  availabilityMap = new Map<string, number>();
+  availabilityError: string | null = null;
   saving = false;
   readonly today = new Date();
 
   form = this.fb.group({
-    hotelId:     [null as number | null, Validators.required],
-    roomTypeId:  [null as number | null, Validators.required],
-    guestName:   ['', [Validators.required, Validators.minLength(2), Validators.maxLength(200)]],
-    guestEmail:  ['', [Validators.required, Validators.email]],
-    guestPhone:  ['', Validators.pattern(/^[+\d\s\-()\\.]{7,20}$/)],
-    checkIn:     [null as Date | null, Validators.required],
-    checkOut:    [null as Date | null, Validators.required],
-    rooms:       [1, [Validators.required, Validators.min(1), Validators.max(20)]],
-    notes:       ['']
+    hotelId:    [null as number | null, Validators.required],
+    roomTypeId: [null as number | null, Validators.required],
+    guestName:  ['', [Validators.required, Validators.minLength(2), Validators.maxLength(200)]],
+    guestEmail: ['', [Validators.required, Validators.email]],
+    guestPhone: ['', Validators.pattern(/^[+\d\s\-()\\.]{7,20}$/)],
+    checkIn:    [null as Date | null, Validators.required],
+    checkOut:   [null as Date | null, Validators.required],
+    rooms:      [1, [Validators.required, Validators.min(1), Validators.max(20)]],
+    notes:      ['']
   });
+
+  // Arrow function preserves 'this' when passed to [matDatepickerFilter]
+  dateFilter = (date: Date | null): boolean => {
+    if (!date || !this.selectedRoomType) return true;
+    const avail = this.availabilityMap.get(this.dateKey(date));
+    return avail === undefined || avail > 0;
+  };
 
   ngOnInit(): void {
     this.hotelSvc.getAll({ pageSize: 100, isActive: true }).subscribe(r => this.hotels = r.items);
@@ -62,21 +73,79 @@ export class BookingFormComponent implements OnInit {
       if (id) this.rtSvc.getByHotel(id).subscribe(rts => this.roomTypes = rts);
       else this.roomTypes = [];
       this.selectedRoomType = null;
+      this.availabilityMap.clear();
+      this.availabilityError = null;
       this.form.patchValue({ roomTypeId: null });
     });
 
     this.form.get('roomTypeId')!.valueChanges.subscribe((id: number | null) => {
       this.selectedRoomType = this.roomTypes.find(rt => rt.id === id) ?? null;
-      const ctrl = this.form.get('rooms')!;
-      const max = this.selectedRoomType?.totalRooms ?? 20;
-      ctrl.setValidators([Validators.required, Validators.min(1), Validators.max(max)]);
-      ctrl.updateValueAndValidity();
+      this.availabilityMap.clear();
+      this.availabilityError = null;
+      this.updateRoomsValidator();
+      if (id) this.loadAvailability(id);
     });
 
     this.form.get('checkIn')!.valueChanges.subscribe(() => {
       const checkOut = this.form.get('checkOut');
       if (checkOut?.value) checkOut.updateValueAndValidity();
+      this.checkAvailability();
     });
+
+    this.form.get('checkOut')!.valueChanges.subscribe(() => this.checkAvailability());
+    this.form.get('rooms')!.valueChanges.subscribe(() => this.checkAvailability());
+  }
+
+  private loadAvailability(roomTypeId: number): void {
+    const start = this.dateKey(new Date());
+    const end = this.dateKey(new Date(Date.now() + 365 * 86400000));
+    this.avSvc.get({ roomTypeId, startDate: start, endDate: end }).subscribe(avs => {
+      this.availabilityMap.clear();
+      for (const av of avs) {
+        this.availabilityMap.set(av.date.slice(0, 10), av.availableRooms);
+      }
+      this.checkAvailability();
+    });
+  }
+
+  private checkAvailability(): void {
+    const ci = this.form.value.checkIn as Date | null;
+    const co = this.form.value.checkOut as Date | null;
+    if (!ci || !co || !this.selectedRoomType || co <= ci) {
+      this.availabilityError = null;
+      this.updateRoomsValidator();
+      return;
+    }
+    const days = Math.ceil((co.getTime() - ci.getTime()) / 86400000);
+    let minAvail: number | null = null;
+    for (let i = 0; i < days; i++) {
+      const date = new Date(ci.getTime() + i * 86400000);
+      const avail = this.availabilityMap.get(this.dateKey(date));
+      if (avail !== undefined && (minAvail === null || avail < minAvail)) minAvail = avail;
+    }
+
+    this.updateRoomsValidator(minAvail ?? undefined);
+
+    const rooms = this.form.value.rooms ?? 1;
+    if (minAvail !== null && minAvail === 0) {
+      this.availabilityError = 'No hay disponibilidad en el rango de fechas seleccionado.';
+    } else if (minAvail !== null && minAvail < rooms) {
+      this.availabilityError = `Solo hay ${minAvail} habitación(es) disponible(s) en las fechas seleccionadas.`;
+    } else {
+      this.availabilityError = null;
+    }
+  }
+
+  private updateRoomsValidator(minAvail?: number): void {
+    const ctrl = this.form.get('rooms')!;
+    const totalMax = this.selectedRoomType?.totalRooms ?? 20;
+    const max = minAvail !== undefined ? Math.min(totalMax, minAvail) : totalMax;
+    ctrl.setValidators([Validators.required, Validators.min(1), Validators.max(max)]);
+    ctrl.updateValueAndValidity({ emitEvent: false });
+  }
+
+  private dateKey(d: Date): string {
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   }
 
   get minCheckOut(): Date {
@@ -98,7 +167,7 @@ export class BookingFormComponent implements OnInit {
   }
 
   save(): void {
-    if (this.form.invalid) return;
+    if (this.form.invalid || this.availabilityError) return;
     this.saving = true;
     const val = this.form.value as any;
     const payload = {
@@ -112,8 +181,9 @@ export class BookingFormComponent implements OnInit {
         this.snack.open('Reserva creada', 'OK', { duration: 3000 });
         this.router.navigate(['/bookings']);
       },
-      error: () => {
-        this.snack.open('Error al crear reserva', 'OK', { duration: 3000 });
+      error: (err) => {
+        const msg = err.error?.message ?? 'Error al crear reserva';
+        this.snack.open(msg, 'OK', { duration: 5000 });
         this.saving = false;
       }
     });

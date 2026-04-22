@@ -31,6 +31,20 @@
   .price-value { font-size: 1.5rem; font-weight: 700; color: #1a237e; }
 }
 
+.availability-error {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #c62828;
+  background: #ffebee;
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 0.875rem;
+
+  mat-icon { font-size: 18px; height: 18px; width: 18px; }
+}
+
 .form-actions {
   display: flex;
   justify-content: flex-end;

@@ -22,8 +22,15 @@ public class BookingsController(IBookingService service) : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateBookingDto dto)
     {
-        var booking = await service.CreateAsync(dto);
-        return CreatedAtAction(nameof(GetById), new { id = booking.Id }, booking);
+        try
+        {
+            var booking = await service.CreateAsync(dto);
+            return CreatedAtAction(nameof(GetById), new { id = booking.Id }, booking);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     [HttpPatch("{id:int}/status")]
