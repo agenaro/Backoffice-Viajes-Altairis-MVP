@@ -10,7 +10,7 @@ Sistema de gestión interna para agencias de viajes y hoteles. Permite administr
 |---|---|
 | Frontend | Angular 17 + Angular Material |
 | Backend | ASP.NET Core 8 (C#) |
-| ORM | Entity Framework Core 8 + Pomelo MySQL |
+| ORM | Entity Framework Core 8 |
 | Base de datos | MySQL 8.0 |
 | Contenedores | Docker + Docker Compose |
 | Documentación API | Swagger / OpenAPI |
