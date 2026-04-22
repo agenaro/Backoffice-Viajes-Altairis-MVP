@@ -37,7 +37,7 @@ Backoffice-Viajes-Altairis-MVP/
 │   ├── Repositories/
 │   ├── Models/
 │   └── DTOs/
-├── frontend/         # Angular 17 SPA
+├── frontend/         # Angular 17
 │   └── src/app/
 │       ├── core/         # Servicios, modelos, guards
 │       └── features/     # Módulos por funcionalidad
